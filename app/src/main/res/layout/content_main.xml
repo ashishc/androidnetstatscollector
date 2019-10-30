@@ -10,32 +10,26 @@
     tools:context="cms.aa.com.myapplication.MainActivity"
     tools:showIn="@layout/activity_main">
 
+    <ToggleButton
+        android:id="@+id/toggleButton"
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        android:layout_marginEnd="8dp"
+        android:paddingTop="0px"
+        android:text="ToggleButton"
+        android:textOff="stream data"
+        android:textOn="stop"
+
+        android:textSize="8sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_editor_absoluteY="-5dp"
+        tools:text="collect data" />
+
     <ListView
         android:id="@+id/myListView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toggleButton"
         app:layout_constraintVertical_bias="0.0" />
-
-    <ToggleButton
-        android:id="@+id/toggleButton"
-        android:layout_width="400dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:text="ToggleButton"
-        android:textOff="stream data"
-        android:textOn="stop"
-        android:textSize="8sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/myListView"
-        app:layout_constraintVertical_bias="1.0"
-        tools:text="collect data" />
 
 </android.support.constraint.ConstraintLayout>

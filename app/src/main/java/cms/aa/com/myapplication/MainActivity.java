@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceActivity;
@@ -45,6 +46,7 @@ import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.text.BreakIterator;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -58,14 +60,17 @@ public class MainActivity extends AppCompatActivity {
     double oldLat = 0;
     double oldLong = 0;
     static boolean stream = false;
-    RequestParams params;
+    JSONObject params;
+    static String url = "http://192.168.43.82:8080/api/v1/lte/stats";
+    static int UPDATE_DATA_TIMER = 5000;
+    static Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        params = new RequestParams();
-
+        params = new JSONObject();
+        context = this;
         setContentView(R.layout.activity_main);
 
 
@@ -200,8 +205,15 @@ public class MainActivity extends AppCompatActivity {
                     double rssi = (int) SignalStrength.class.getMethod("getLteSignalStrength").invoke(signalStrength);
                     dataList.set(14, "LTE_RSSI: " + rssi);
 
-                    params.add("snr", "" + snr);
-                    params.add("rssi", "" + rssi);
+                    if (Build.VERSION.SDK_INT >= 26) {
+                        params.put("srlNo", "" + android.os.Build.getSerial());
+                    } else {
+                        params.put("srlNo", "" + android.os.Build.SERIAL);
+                    }
+
+
+                    params.put("snr", "" + snr);
+                    params.put("rssi", "" + rssi);
 
                     arrayAdapter.notifyDataSetChanged();
                 } catch (Exception e) {
@@ -239,12 +251,12 @@ public class MainActivity extends AppCompatActivity {
                     dataList.set(10, "long: " + loc.getLongitude());
                     dataList.set(11, "alt: " + loc.getAltitude());
                     dataList.set(12, "city: " + cityName);
-                    params.add("lat", "" + loc.getLatitude());
-                    params.add("lon", "" + loc.getLongitude());
-                    params.add("city", "" + cityName);
+                    params.put("lat", "" + loc.getLatitude());
+                    params.put("lon", "" + loc.getLongitude());
+                    params.put("city", "" + cityName);
 
                     arrayAdapter.notifyDataSetChanged();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -264,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
 
         final LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new MyLocationListener();
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
         Runnable runnable = new Runnable() {
 
@@ -298,8 +310,8 @@ public class MainActivity extends AppCompatActivity {
                     dataList.set(7, "D/L speed (Kbps): " + nc.getLinkDownstreamBandwidthKbps());
                     dataList.set(8, "U/L speed (Kbps): " + nc.getLinkUpstreamBandwidthKbps());
 
-                    params.add("dlSpd", "" + nc.getLinkDownstreamBandwidthKbps());
-                    params.add("ulSpd", "" + nc.getLinkUpstreamBandwidthKbps());
+                    params.put("dlSpd", "" + nc.getLinkDownstreamBandwidthKbps());
+                    params.put("ulSpd", "" + nc.getLinkUpstreamBandwidthKbps());
 
                     arrayAdapter.notifyDataSetChanged();
 
@@ -323,14 +335,19 @@ public class MainActivity extends AppCompatActivity {
                                     dataList.set(15, "imei: " + tm.getImei());
                                     dataList.set(16, "EARFCN:" + identityLte.getEarfcn());
 
-                                    params.add("rspr", "" + lte.getRsrp());
-                                    params.add("rsrq", "" + lte.getRsrq());
-                                    params.add("pci", "" + identityLte.getPci());
-                                    params.add("phnNo", "" + tm.getLine1Number());
-                                    params.add("nwOpr", "" + tm.getNetworkOperatorName());
-                                    params.add("nwCon", "" + tm.getNetworkCountryIso());
-                                    params.add("imei", "" + tm.getImei());
-                                    params.add("efcn", "" + identityLte.getEarfcn());
+                                    params.put("rspr", "" + lte.getRsrp());
+                                    params.put("rsrq", "" + lte.getRsrq());
+                                    params.put("pci", "" + identityLte.getPci());
+                                    params.put("phnNo", "" + tm.getLine1Number());
+                                    params.put("nwOpr", "" + tm.getNetworkOperatorName());
+                                    params.put("nwCon", "" + tm.getNetworkCountryIso());
+                                    params.put("imei", "" + tm.getImei());
+                                    params.put("efcn", "" + identityLte.getEarfcn());
+                                    params.put("insert", "" +  Instant.now()
+                                            .toString());
+
+
+
 
                                     arrayAdapter.notifyDataSetChanged();
                                 }
@@ -345,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (locationManager != null) {
                     String cityName = "-";
-                    Location loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                     Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
                     List<Address> addresses;
                     try {
@@ -361,41 +378,27 @@ public class MainActivity extends AppCompatActivity {
                         dataList.set(12, "city: " + cityName);
                         dataList.set(13, "Speed(m/s): " + getDistance(oldLat, oldLong, loc.getLatitude(), loc.getLongitude()));
 
-                        params.add("lat", "" + loc.getLatitude());
-                        params.add("lon", "" + loc.getLongitude());
-                        params.add("city", "" + cityName);
-                        params.add("speed", "" + getDistance(oldLat, oldLong, loc.getLatitude(), loc.getLongitude()));
+                        params.put("lat", "" + loc.getLatitude());
+                        params.put("lon", "" + loc.getLongitude());
+                        params.put("city", "" + cityName);
+                        params.put("speed", "" + getDistance(oldLat, oldLong, loc.getLatitude(), loc.getLongitude()));
 
                         oldLat = loc.getLatitude();
                         oldLong = loc.getLongitude();
                         arrayAdapter.notifyDataSetChanged();
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
 
                 if (stream) {
-                    HttpUtils.post("http://18.223.13.137:8090/api/v1/lte/stats", params, new JsonHttpResponseHandler() {
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                            super.onSuccess(statusCode, headers, responseString);
-                            Log.i("restcall","success");
-                            Log.d("restcall",responseString);
-                        }
-
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                            super.onFailure(statusCode, headers, responseString, throwable);
-                            Log.e("restcall", "something is wrong");
-                            throwable.printStackTrace();
-                        }
-                    });
+                    HttpUtils.postByUrl(context,url, params);
                 }
-                handler.postDelayed(this, 5000);
+                handler.postDelayed(this, UPDATE_DATA_TIMER);
             }
         };
 
-        handler.postDelayed(runnable, 5000);
+        handler.postDelayed(runnable, 500);
 
 
         ToggleButton toggle = (ToggleButton) findViewById(R.id.toggleButton);
