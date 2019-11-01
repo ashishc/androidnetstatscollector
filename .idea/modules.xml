@@ -5,7 +5,6 @@
       <module fileurl="file://C:\workspace-rest\androidnetstatscollector\MyApplication.iml" filepath="C:\workspace-rest\androidnetstatscollector\MyApplication.iml" />
       <module fileurl="file://$PROJECT_DIR$/androidnetstatscollector.iml" filepath="$PROJECT_DIR$/androidnetstatscollector.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://C:\workspace-rest\androidnetstatscollector\app\app.iml" filepath="C:\workspace-rest\androidnetstatscollector\app\app.iml" />
     </modules>
   </component>
 </project>

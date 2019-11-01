@@ -49,7 +49,7 @@ public class HttpUtils {
                 }
 
                 public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-
+                    Log.e("rest error ", new String(responseBody));
                     error.printStackTrace();
                 }
 

@@ -61,8 +61,10 @@ public class MainActivity extends AppCompatActivity {
     double oldLong = 0;
     static boolean stream = false;
     JSONObject params;
-    static String url = "http://192.168.43.82:8080/api/v1/lte/stats";
-    static int UPDATE_DATA_TIMER = 5000;
+    //static String url = "http://192.168.43.82:8080/api/v1/lte/stats";
+    static String url = "https://cnamapp01.azurewebsites.net/api/v1/lte/stats";
+
+    static int UPDATE_DATA_TIMER = 15000;
     static Context context;
 
     @Override
@@ -209,10 +211,15 @@ public class MainActivity extends AppCompatActivity {
                         params.put("srlNo", "" + android.os.Build.getSerial());
                     } else {
                         params.put("srlNo", "" + android.os.Build.SERIAL);
+                        params.put("rsrp", (int) SignalStrength.class.getMethod("getLteRsrp").invoke(signalStrength));
+                        params.put("rsrq", (int) SignalStrength.class.getMethod("getLteRsrq").invoke(signalStrength));
+
+                        dataList.set(0, "LTE_RSRP: " + (int) SignalStrength.class.getMethod("getLteRsrp").invoke(signalStrength));
+                        dataList.set(1, "LTE_RSRQ: " + + (int) SignalStrength.class.getMethod("getLteRsrq").invoke(signalStrength));
                     }
 
 
-                    params.put("snr", "" + snr);
+                    params.put("snr",   snr);
                     params.put("rssi", "" + rssi);
 
                     arrayAdapter.notifyDataSetChanged();
@@ -326,8 +333,12 @@ public class MainActivity extends AppCompatActivity {
                                 } else if (info instanceof CellInfoLte) {
                                     final CellSignalStrengthLte lte = ((CellInfoLte) info).getCellSignalStrength();
                                     final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
-                                    dataList.set(0, "LTE_RSRP: " + lte.getRsrp());
-                                    dataList.set(1, "LTE_RSRQ: " + lte.getRsrq());
+                                    if (Build.VERSION.SDK_INT >= 26) {
+                                        dataList.set(0, "LTE_RSRP: " + lte.getRsrp());
+                                        dataList.set(1, "LTE_RSRQ: " + lte.getRsrq());
+                                        params.put("rsrp",  lte.getRsrp());
+                                        params.put("rsrq",  lte.getRsrq());
+                                    }
                                     dataList.set(3, "PCI: " + identityLte.getPci());
                                     dataList.set(4, "Phone no: " + tm.getLine1Number());
                                     dataList.set(5, "Network Operator: " + tm.getNetworkOperatorName());
@@ -335,19 +346,15 @@ public class MainActivity extends AppCompatActivity {
                                     dataList.set(15, "imei: " + tm.getImei());
                                     dataList.set(16, "EARFCN:" + identityLte.getEarfcn());
 
-                                    params.put("rspr", "" + lte.getRsrp());
-                                    params.put("rsrq", "" + lte.getRsrq());
-                                    params.put("pci", "" + identityLte.getPci());
+
+
+                                    params.put("pci",  identityLte.getPci());
                                     params.put("phnNo", "" + tm.getLine1Number());
                                     params.put("nwOpr", "" + tm.getNetworkOperatorName());
                                     params.put("nwCon", "" + tm.getNetworkCountryIso());
-                                    params.put("imei", "" + tm.getImei());
+                                    params.put("imei",  tm.getImei());
                                     params.put("efcn", "" + identityLte.getEarfcn());
-                                    params.put("insert", "" +  Instant.now()
-                                            .toString());
-
-
-
+                                    params.put("insert", "" +  Instant.now().toString());
 
                                     arrayAdapter.notifyDataSetChanged();
                                 }
@@ -363,6 +370,9 @@ public class MainActivity extends AppCompatActivity {
                 if (locationManager != null) {
                     String cityName = "-";
                     Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    if(loc == null)
+                        loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
                     Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
                     List<Address> addresses;
                     try {
@@ -429,6 +439,4 @@ public class MainActivity extends AppCompatActivity {
         dataList.add("imei: " + "-");
         dataList.add("DbM: " + "-");
     }
-
-
 }
